@@ -23,3 +23,9 @@ Lora-avec-Quantization: a learning lab that LoRA-fine-tunes a small LLM for sent
 - **weight-only quantization**: weights are stored in low bits; activations and math stay in float. GPTQ and AWQ are examples.
 - **QLoRA**: LoRA on top of a base model stored in 4-bit NF4.
 - **activation outliers**: a few hidden channels in LLMs with values ~100x the rest; they make activation quantization hard.
+- **margin**: top logit minus the runner-up. A prediction flips under noise only when the noise exceeds the margin.
+- **agreement**: share of inputs where a variant predicts the same class as fp32. One minus agreement is the **churn**.
+- **McNemar test**: a paired test on the inputs where exactly one of two models is right; asks if those split 50/50.
+- **fake quantization**: round weights to int8 and back to float, so the graph stays fp32. Isolates the rounding error from kernel speed.
+- **activation outliers**: a few channels of a layer's input with values hundreds of times the median; they ruin a per-tensor activation scale.
+- **mixed precision (quantization)**: quantize most layers, keep the sensitive ones in fp32.

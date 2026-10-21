@@ -6,6 +6,8 @@ A small learning lab: LoRA-fine-tune Qwen2.5-0.5B for 3-class sentiment, then qu
 - `docs/PLAN.md`: the plan and what we agreed. Read it when starting a step.
 - `docs/journal.md`: what each finished step did and why.
 - `docs/experiments.md`: five experiments for Taras, with expected results and mechanisms.
+- `docs/reading.md`: Taras's theory guide for the interview.
+- `docs/defense.md`: the evidence, conclusions at three levels, and questions with answers. Update its numbers when results change.
 - `NOTES.md`: Taras's own notes on what surprised him. Only he writes there; never edit his entries.
 - `docs/adr/`: decisions that are hard to undo (created when the first one is needed).
 

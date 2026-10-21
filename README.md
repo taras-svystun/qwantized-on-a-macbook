@@ -52,3 +52,14 @@ Single runs write to `outputs/<date>/<time>/`, sweeps to `multirun/<date>/<time>
 - `train.py`: the whole pipeline, top to bottom.
 
 Experiments to try, with expected results: `docs/experiments.md`.
+
+## Analysis
+
+```bash
+.venv/bin/python analysis/baseline_tfidf.py          # TF-IDF + logistic regression on the same split, seconds
+.venv/bin/python analysis/activation_outliers.py     # activation outliers per layer type, about 1 minute
+.venv/bin/python train.py quant.keep_onnx=true       # then, with that run's folder:
+.venv/bin/python analysis/quant_ablation.py outputs/<date>/<time>/onnx   # where int8 loses accuracy, about 5 minutes
+```
+
+Defense notes and the results of these scripts: `docs/defense.md`.

@@ -21,3 +21,11 @@ Added `docs/reading.md`: LoRA and quantization by mechanism, with numbers from t
 - Hydra sets the root logger to INFO, which printed thousands of ONNX-exporter lines; `hydra.job_logging.root.level` is now WARNING.
 - Added `quant.op_types` so experiment 5 can keep embeddings in fp32.
 - `docs/experiments.md`: five experiments with the expected result and the mechanism.
+
+## 2026-10-21: defense pack and analysis
+
+- `analysis/baseline_tfidf.py`: TF-IDF + logistic regression on the same split gets 0.723 / F1 0.637 (majority class 0.613), so the LLM adds about 10 accuracy and 17 F1 points at about 70x the latency.
+- `analysis/activation_outliers.py`: the inputs of `down_proj` reach 1940, 1552x the median channel, and a per-tensor int8 scale rounds 48% of them to zero. Other layer types are far milder.
+- `analysis/quant_ablation.py`: keeping only the 24 `down_proj` matrices in fp32 raises agreement with fp32 from 0.882 to 0.953; keeping attention or gate/up in fp32 does not help. Weight-only fake quantization changes only 2-3% of predictions, so activations cause most of the damage. The int8 accuracy drop is not significant at n = 400 (McNemar p = 0.18).
+- Weight-only lost 9 and won 1 (p = 0.02): a sign that the fp32 baseline is optimistic because the learning rate was chosen on the eval set.
+- `docs/defense.md`: pitch, evidence tables, conclusions at three levels, code lines, 23 questions with answers, weak spots.
