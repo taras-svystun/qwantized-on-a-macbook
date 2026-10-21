@@ -19,3 +19,8 @@ quant:
   enabled: true        # false: stop after training
   keep_onnx: false     # false: delete ONNX files once their numbers are logged
   op_types: null       # null: every op ORT can quantize (MatMul, Gather...); [MatMul] keeps embeddings fp32
+
+hydra:
+  job_logging:
+    root:
+      level: WARNING   # hide INFO chatter from the ONNX exporter; our print() lines still show

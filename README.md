@@ -12,7 +12,7 @@ python3 -m venv .venv
 
 ## Run
 
-One run: train, merge, export, quantize, compare (about 5 minutes on an M1):
+One run: train, merge, export, quantize, compare (about 8 minutes on an M1):
 
 ```bash
 .venv/bin/python train.py
@@ -50,3 +50,5 @@ Single runs write to `outputs/<date>/<time>/`, sweeps to `multirun/<date>/<time>
 - `conf/config.yaml`: picks one option per group, plus W&B and quantization settings.
 - `conf/{model,data,lora,train}/`: config groups; add a file to add an option.
 - `train.py`: the whole pipeline, top to bottom.
+
+Experiments to try, with expected results: `docs/experiments.md`.

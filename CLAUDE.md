@@ -5,6 +5,7 @@ A small learning lab: LoRA-fine-tune Qwen2.5-0.5B for 3-class sentiment, then qu
 - `GLOSSARY.md`: the project's words. Use them in code, docs and commits.
 - `docs/PLAN.md`: the plan and what we agreed. Read it when starting a step.
 - `docs/journal.md`: what each finished step did and why.
+- `docs/experiments.md`: five experiments for Taras, with expected results and mechanisms.
 - `NOTES.md`: Taras's own notes on what surprised him. Only he writes there; never edit his entries.
 - `docs/adr/`: decisions that are hard to undo (created when the first one is needed).
 
