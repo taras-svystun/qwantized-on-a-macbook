@@ -305,12 +305,80 @@ The mechanisms carry over, and they get stronger with size: LLM.int8() reports o
 
 ## 8. Answers to the questions in NOTES.md
 
-**1. What are `q_proj` and `v_proj`?**
-In each attention layer, every token's hidden vector `h` (896 numbers) is projected three ways. `q_proj` makes the query, "what am I looking for" (896 → 896, 14 heads x 64). `k_proj` makes the key, "what do I contain" (896 → 128). `v_proj` makes the value, "what I hand over if chosen" (896 → 128). Attention scores are `q · k`, and the output is the score-weighted sum of the values. Analogy: in a library, the query is your request, the keys are the index cards, the values are the books. LoRA on `q` changes *where* a token looks; LoRA on `v` changes *what* it brings back. The LoRA paper found `q` + `v` the best pair for a fixed budget [literature]. The k/v projections are only 128 wide because of grouped-query attention: 2 key/value heads are shared by 14 query heads, which makes the KV cache 7x smaller.
+Plain words first; the one formula at the end of each answer is optional.
 
-**2. What is "low rank"?**
-High level: the rank of a matrix is the number of independent directions it can act on. A full update `ΔW` for `q_proj` has 802,816 numbers and could act on all 896 directions. The bet is that adapting to one task only needs a few: for sentiment, a few directions like "money going up vs down". Analogy: an 8-slider equaliser instead of re-recording the song; or PCA, where a few components explain most of the variance.
-Low level: `ΔW = B @ A` is a sum of `r` outer products, `Σ b_i a_iᵀ`. Each term means: "measure how much the input points along `a_i` (one dot product), then push the output along `b_i`". So `A` (r x 896) reads `r` features from the input and `B` (896 x r) writes them back, and `rank(BA) ≤ r` by construction. Cost: `r(d_in + d_out)` = 14,336 instead of 802,816 for `q_proj` at r=8, 56x fewer. Evidence from this project: r=4, 8 and 16 are within noise, so the task really is low-rank. Where it breaks: a task far from pretraining, like a new language, needs many new directions, so a higher rank or full fine-tuning.
+### Read these 3 first (the 20% that gives 80%)
 
-**3. What does "LoRA does NOT save activations" mean?**
-Training memory has four parts: weights, gradients, optimizer state (AdamW keeps 2 numbers per parameter), and activations (the intermediate tensors of the forward pass, kept for backprop). LoRA removes gradients and optimizer state for the frozen 99.9%. That is about 3x the model size saved. Activations stay, because backprop needs them. The chain rule goes through every layer between the loss and the earliest LoRA layer. A frozen linear layer passes the gradient back as `Wᵀ δ`, which needs only `W`; but SiLU, RMSNorm and softmax need their saved inputs or outputs to compute their derivatives, and each LoRA `A` needs its input `x` to compute its own gradient. So activation memory, which grows with batch x sequence x hidden x layers, is about the same as in full fine-tuning. The lever for it is gradient checkpointing (recompute instead of store) or smaller batches and sequences, not LoRA.
+**Q3. "LoRA does NOT save activations".**
+Activations = the numbers that flow *between* layers during one forward pass (the `x` in `y = Wx`). Training is: forward pass, then backward pass. The backward pass goes through the layers in reverse and, at each layer, needs that layer's input from the forward pass. So all of them are kept in memory until backward ends.
+Analogy: checking a long calculation backwards. You need every intermediate line written down, even for lines you will not change.
+LoRA freezes 99.9% of the weights, so it saves the memory for *their* gradients and optimizer state. But the backward pass still walks through every frozen layer, so all the intermediate lines stay written down. Memory for them grows with batch size x sentence length, which is why our runs went to swap.
+Your self-test answer 2 ("0.1% is still a lot") was wrong; this is the answer.
+
+**Q6. Why TF-IDF and not the model without fine-tuning?** You caught a real gap.
+The model without fine-tuning has no way to answer. `AutoModelForSequenceClassification` adds a brand new layer (896 numbers -> 3 class scores) with random weights. Before training it guesses at random: about 33%, worse than always saying `neutral` (61.3%). So "base model" as a baseline is just "random", which is why it was skipped.
+What the fine-tune bought, with the numbers we have: random head ~0.33 -> majority class 0.613 -> TF-IDF 0.723 -> LoRA 0.825.
+The fair question is "how much did LoRA add on top of just training the new head?". The comparison that answers it is a **linear probe**: freeze the whole model, train only the 3-class head. Not run yet (~5 min). Another fair baseline is zero-shot prompting of an instruct model ("Is this positive, negative or neutral?"), which is the agent-world way you already know.
+
+**Q9. Why train/test and not train/val/test?** You caught a real gap again.
+I picked the learning rate by looking at the eval set. Once you choose anything with a set, it is a validation set, and its score is too optimistic. We have no clean test set. Section 3, S5 shows the effect. Fix: put 400 of the 2900 unused sentences aside, never look at them while tuning, and report on them once at the end.
+Interview line: "my eval set was used for tuning, so it is really a validation set; the honest number needs a held-out test set."
+
+### The rest
+
+**Q1. `q_proj` and `v_proj`.**
+Attention lets each word gather information from other words. Each word's vector is turned into three vectors by three weight matrices:
+- query (`q_proj`): "what am I looking for?"
+- key (`k_proj`): "what do I contain?"
+- value (`v_proj`): "what do I give if someone picks me?"
+A word compares its query with every key, gets scores, and takes a weighted mix of the values.
+Analogy: a library. Query = your request, keys = index cards, values = the books.
+LoRA on `q` changes *what each word looks for*; LoRA on `v` changes *what it brings back*. The LoRA paper found this pair best for a small budget [literature].
+
+**Q2. Low rank.**
+High level: a weight matrix maps 896 input numbers to 896 output numbers. Its rank is how many independent "directions" it really uses. A full update could change all 896. The bet: a new task needs only a few. Sentiment needs maybe "good news vs bad news", "certain vs vague".
+Analogy: a sound engineer. Re-recording the song = full fine-tuning. Moving 8 sliders on the equaliser = LoRA with r=8.
+Low level: `ΔW = B @ A`. `A` (8 x 896) reads 8 numbers from the input: each row is one "detector", a dot product. `B` (896 x 8) writes those 8 numbers back into the 896 outputs. Everything passes through an 8-number bottleneck, so the update can never use more than 8 directions.
+Cost for `q_proj`: 896 x 896 = 802,816 numbers for a full update; 8 x (896 + 896) = 14,336 with LoRA, 56x fewer.
+Evidence here: r = 4, 8 and 16 gave the same accuracy within noise, so 4 directions were enough.
+
+**Q4. Is it like PCA / SVD?** Yes, closely.
+SVD writes any matrix as a sum of rank-1 pieces, sorted by size. Keeping the top `r` pieces gives the best rank-`r` copy of the matrix (Eckart-Young theorem). That is exactly how PCA keeps the top components.
+LoRA's `B @ A` is a rank-`r` matrix too. The difference: SVD *computes* the best rank-`r` matrix from one you already have. LoRA does not have the full `ΔW` (that is what full fine-tuning would give you), so it *learns* a rank-`r` matrix directly with gradient descent.
+The LoRA paper did this check: it took full updates, ran SVD, and found a few top directions carry most of it [literature]. A variant, PiSSA, starts `A` and `B` from the SVD of `W` itself [literature].
+
+**Q5. Why `alpha / r` keeps the update size stable.**
+Mechanism with Adam (our optimizer): each trainable number moves by about `lr` per step, whatever its gradient. One entry of the update is `ΔW_ij = B_i1 A_1j + ... + B_ir A_rj`, a sum of `r` terms, each growing by about `lr`. So with r=16 there are twice as many terms as with r=8, and the update grows roughly twice as fast. Dividing by `r` cancels that.
+Analogy: a jury. Add up the votes and the result grows with the size of the jury; take the average and it does not.
+Where it stops: terms are not perfectly aligned, so the growth is between `√r` and `r`. rsLoRA argues for `alpha / √r` [literature]. In our sweep alpha was fixed at 16, so r=16 had half the scale of r=8: like a smaller learning rate.
+
+**Q7. fp32 vs int8. Why integers?**
+- fp32: a 32-bit float, 4 bytes. It is scientific notation, `1.234 x 10^-3`: a huge range of sizes with ~7 digits of precision.
+- int8: 1 byte, only 256 values, -128 to 127. Plus one float `scale` per matrix (or row): `real ≈ int x scale`. A ruler with 256 marks.
+Why integers: 4x less memory, and chips multiply small integers faster and with less energy than floats.
+Can we use small floats instead? Yes, and it is common: fp16 and bf16 (2 bytes) for training, fp8 on new GPUs, NF4 (4-bit) in QLoRA. Floats suit numbers that span many sizes; int + scale suits numbers in a known range.
+
+**Q8. Per-channel: what are rows and columns?**
+In PyTorch a linear layer computes `y = W x`, with `W` of shape (outputs, inputs), for `q_proj` (896, 896).
+- Row `i`: the weights that make output number `i`. `y_i` = dot product of row `i` with the input. Think of a row as one detector.
+- Column `j`: how input number `j` affects all outputs.
+"Channel" = output = row. Per-channel gives each detector its own ruler.
+Why rows and not columns: with one scale per row, `y_i = scale_i x (integer row · integer x)`. The scale comes out of the sum, so the whole dot product stays in fast integer math, with one multiply at the end. A scale per column would sit inside the sum and break that.
+
+### Your self-test answers, corrected
+
+1. B = 0: your intuition is right. Random `B` adds random noise to every layer, so the model starts damaged. Extra point: why not `A = 0` too? The gradient of `B` is proportional to `A`, and vice versa. Both zero means both gradients are zero forever. One zero, one random is the minimum that can learn.
+2. Wrong: see Q3 (activations).
+3. See Q5.
+4. Merged: no extra cost at inference, and a plain model to deploy. Unmerged: one base model in memory plus many small adapters. 100 customers = 1 base (1 GB) + 100 adapters (2 MB each), not 100 models of 1 GB. You swap the adapter per request.
+5. Correct.
+6. Weights are always quantized once, ahead of time. Static vs dynamic is only about **activations**. To turn them into int8 you need their range. Dynamic: measure the range for each input, live. Static: measure ranges once on ~100 sample inputs (calibration) and freeze them. Analogy: camera auto-exposure for each shot vs exposure fixed from test shots.
+7. Yes, activations can be quantized: they are the `x` in `y = Wx`. Fast integer math needs **both** sides as int8: int8 weights x int8 activations. Weight-only keeps `x` in float and turns the int8 weights back to float just before multiplying: memory saved, math the same. LLMs like weight-only because (a) at batch 1 the slow part is moving weights from memory, which weight-only already fixes, and (b) activations have outliers (our `down_proj`: up to 1940) that break int8.
+8. Your answer is half right: the number of multiplications does not change. The other half: time = fetching weights from memory + multiplying. int8 makes fetching 4x cheaper. Analogy: moving house with the same number of boxes, each 4x lighter. Carrying is faster; unpacking is not. Here it *was* 3x faster [measured]. It would not be when converting int8 <-> float costs more than it saves, or when the chip has no fast int8 instructions.
+9. Good, and senior: a small drop can be worth it for a 4x smaller model that fits a phone. Add the statistics: here p = 0.18, so the drop is not proven. But 12% of predictions changed, and users feel changed answers. "Not significant" does not mean "no difference".
+
+### Small fixes to your explanations
+
+- It is `(alpha / r) * B @ A`, not `r / alpha`. And 0.1% of weights, not 0.5%.
+- LoRA does not take "the low rank of q and v". It adds a low-rank *update* next to the frozen q and v weights.
+- "fp32 vs int8 showed no significant difference, which is nice": not significant on 400 sentences, yet 47 of 400 answers changed. Say both.

@@ -29,3 +29,6 @@ Lora-avec-Quantization: a learning lab that LoRA-fine-tunes a small LLM for sent
 - **fake quantization**: round weights to int8 and back to float, so the graph stays fp32. Isolates the rounding error from kernel speed.
 - **activation outliers**: a few channels of a layer's input with values hundreds of times the median; they ruin a per-tensor activation scale.
 - **mixed precision (quantization)**: quantize most layers, keep the sensitive ones in fp32.
+- **activations**: the numbers that flow between layers in a forward pass (the `x` in `y = Wx`). Training keeps them for the backward pass.
+- **linear probe**: freeze the whole model and train only a new head on top. It shows how much the frozen features already know.
+- **calibration**: running ~100 sample inputs once to measure activation ranges for static quantization.

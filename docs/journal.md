@@ -29,3 +29,7 @@ Added `docs/reading.md`: LoRA and quantization by mechanism, with numbers from t
 - `analysis/quant_ablation.py`: keeping only the 24 `down_proj` matrices in fp32 raises agreement with fp32 from 0.882 to 0.953; keeping attention or gate/up in fp32 does not help. Weight-only fake quantization changes only 2-3% of predictions, so activations cause most of the damage. The int8 accuracy drop is not significant at n = 400 (McNemar p = 0.18).
 - Weight-only lost 9 and won 1 (p = 0.02): a sign that the fp32 baseline is optimistic because the learning rate was chosen on the eval set.
 - `docs/defense.md`: pitch, evidence tables, conclusions at three levels, code lines, 23 questions with answers, weak spots.
+
+## 2026-10-21: answers to NOTES.md questions
+
+Rewrote `docs/defense.md` section 8 in plainer words: all 9 questions, corrections to Taras's self-test, and small fixes to his explanations. Why: the earlier text assumed training jargon he had not used in 2-3 years. Open gap he found: no linear-probe baseline and no held-out test set.
