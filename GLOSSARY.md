@@ -18,3 +18,8 @@ Lora-avec-Quantization: a learning lab that LoRA-fine-tunes a small LLM for sent
 - **external data**: ONNX weights stored in a side file (`model.onnx.data`), because one protobuf file is capped at 2 GB.
 - **macro-F1**: the F1 score per class, averaged with equal weight, so a rare class counts as much as a common one.
 - **score head**: the new `896 -> 3` linear layer that `AutoModelForSequenceClassification` puts on the last non-pad token.
+- **static quantization**: activation scales are fixed ahead of time from a small calibration set.
+- **QAT** (quantization-aware training): rounding is simulated during training, so the model adapts to it.
+- **weight-only quantization**: weights are stored in low bits; activations and math stay in float. GPTQ and AWQ are examples.
+- **QLoRA**: LoRA on top of a base model stored in 4-bit NF4.
+- **activation outliers**: a few hidden channels in LLMs with values ~100x the rest; they make activation quantization hard.
