@@ -1,0 +1,7 @@
+# financial_phrasebank, read straight from the zip in its HF repo.
+repo: takala/financial_phrasebank
+zip_file: data/FinancialPhraseBank-v1.0.zip
+txt_file: FinancialPhraseBank-v1.0/Sentences_50Agree.txt  # 4846 sentences, >=50% of annotators agree
+labels: [negative, neutral, positive]
+train_size: 1500
+eval_size: 400

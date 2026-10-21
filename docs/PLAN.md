@@ -16,13 +16,22 @@ Get hands-on with Hydra, W&B, LoRA and post-training quantization before an inte
 ## Agreed (2026-10-21)
 
 - The AI writes the code; Taras reads it and must be able to explain every file.
-- Data: `financial_phrasebank` from its parquet version. Fallback: `zeroshot/twitter-financial-news-sentiment` (also 3 classes), not `ag_news` (4 classes).
+- Data: `financial_phrasebank`, `Sentences_50Agree.txt` read straight from the zip in its HF repo (the repo has no parquet version, and its loading script no longer runs). Fallback if that breaks: `zeroshot/twitter-financial-news-sentiment` (also 3 classes), not `ag_news` (4 classes).
+- Training loop: plain PyTorch, not HF `Trainer`, so every step (forward, loss, backward, optimizer) is visible.
 - ONNX files are deleted after their numbers are logged; only the last run keeps them.
 - W&B: Taras's free account.
 - GitHub: public repo, as an interview portfolio.
 
 ## Steps
 
-(To be written next.)
+Each step has its check.
+
+1. Environment: `.venv`, pinned `requirements.txt`. Check: imports work, MPS is available.
+2. ONNX spike: export the plain Qwen classifier to ONNX and run it in ONNX Runtime. Check: ONNX logits match PyTorch to about 1e-3.
+3. Hydra config: `conf/` with groups `model/`, `data/`, `lora/`, `train/`. Check: `python train.py --cfg job` prints the resolved config, and an override changes it.
+4. Training + W&B: `train.py` trains LoRA and logs config, loss, accuracy, macro-F1, confusion matrix and parameter counts. Check: one run under 10 minutes, all of these visible in W&B.
+5. Merge, export, quantize: fp32, int8 per-tensor and int8 per-channel ONNX, plus a comparison table in the same W&B run. Check: the table has 3 rows; the int8 files are about 4x smaller.
+6. Sweep: `-m lora.r=4,8,16`, grouped in W&B. Check: 3 runs in one group.
+7. Five experiments for Taras, with the expected result and its mechanism, in `docs/experiments.md`.
 
 Last step, always: clean up the Mac (venv, outputs, ONNX, Hugging Face caches).

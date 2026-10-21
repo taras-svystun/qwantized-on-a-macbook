@@ -1,0 +1,3 @@
+name: Qwen/Qwen2.5-0.5B
+max_length: 64              # tokens; longer sentences are cut
+attn_implementation: eager  # plain attention: exports to ONNX without surprises

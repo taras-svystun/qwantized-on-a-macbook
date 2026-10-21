@@ -1,0 +1,4 @@
+r: 8
+alpha: 16                        # the update is scaled by alpha / r
+dropout: 0.05
+target_modules: [q_proj, v_proj]

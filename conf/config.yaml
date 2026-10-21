@@ -1,0 +1,21 @@
+# Main config. `defaults` picks one file from each group folder;
+# `_self_` last means values in this file win over the group files.
+defaults:
+  - model: qwen05b
+  - data: fpb
+  - lora: default
+  - train: default
+  - _self_
+
+seed: 42
+device: mps            # mps on Apple Silicon, cpu anywhere
+
+wandb:
+  project: qwantized-on-a-macbook
+  group: null          # null: "single" for one run, "sweep-<date>_<time>" under -m
+  mode: online         # offline to log locally only, disabled to turn W&B off
+
+quant:
+  enabled: true        # false: stop after training
+  keep_onnx: false     # false: delete ONNX files once their numbers are logged
+  op_types: null       # null: every op ORT can quantize (MatMul, Gather...); [MatMul] keeps embeddings fp32
