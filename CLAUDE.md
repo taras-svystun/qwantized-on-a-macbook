@@ -8,7 +8,7 @@ A small learning lab: LoRA-fine-tune Qwen2.5-0.5B for 3-class sentiment, then qu
 - `docs/experiments.md`: five experiments for Taras, with expected results and mechanisms.
 - `docs/reading.md`: Taras's theory guide for the interview.
 - `docs/defense.md`: the evidence, conclusions at three levels, and questions with answers. Update its numbers when results change.
-- `NOTES.md`: Taras's own notes on what surprised him. Only he writes there; never edit his entries.
+- `NOTES.md`: Taras's own notes: surprises, insights, questions. Only he writes there; never edit his entries. When he asks, answer all open questions in one pass, in `docs/defense.md` section 8.
 - `docs/adr/`: decisions that are hard to undo (created when the first one is needed).
 
 ## Learning lab rules
@@ -24,7 +24,7 @@ A small learning lab: LoRA-fine-tune Qwen2.5-0.5B for 3-class sentiment, then qu
 - Runs on a MacBook Pro M1 (2020), 16 GB RAM, no paid GPU. One training run must take under about 10 minutes.
 - Disk is tight. Large exports (ONNX files) must not pile up across runs: delete them once their numbers are logged to W&B, keep only the last run's.
 - The repo is a public portfolio on GitHub. No secrets or personal data in files or commits.
-- When the project is done, clean up the Mac: delete `.venv/`, `outputs/`, `multirun/`, `wandb/`, ONNX files and this project's Hugging Face caches. List them with sizes first.
+- When Taras says the project is done (not before), clean up the Mac: delete `.venv/`, `outputs/`, `multirun/`, `wandb/`, ONNX files and this project's Hugging Face caches. List them with sizes first.
 
 ## Finishing a step
 
