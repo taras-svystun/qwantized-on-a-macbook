@@ -13,6 +13,16 @@ Get hands-on with Hydra, W&B, LoRA and post-training quantization before an inte
 5. Merge the adapter, export to ONNX, dynamic int8 quantization per-tensor and per-channel. Log a table to the same run: variant, size MB, CPU latency per sample, accuracy, macro-F1.
 6. When it works: 5 experiments for Taras to run, each with the expected result and its mechanism. `NOTES.md` for his surprises.
 
+## Agreed (2026-10-21)
+
+- The AI writes the code; Taras reads it and must be able to explain every file.
+- Data: `financial_phrasebank` from its parquet version. Fallback: `zeroshot/twitter-financial-news-sentiment` (also 3 classes), not `ag_news` (4 classes).
+- ONNX files are deleted after their numbers are logged; only the last run keeps them.
+- W&B: Taras's free account.
+- GitHub: public repo, as an interview portfolio.
+
 ## Steps
 
-(To be agreed after the planning questions.)
+(To be written next.)
+
+Last step, always: clean up the Mac (venv, outputs, ONNX, Hugging Face caches).

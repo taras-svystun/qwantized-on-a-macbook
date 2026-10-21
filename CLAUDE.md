@@ -19,7 +19,9 @@ A small learning lab: LoRA-fine-tune Qwen2.5-0.5B for 3-class sentiment, then qu
 ## Constraints
 
 - Runs on a MacBook Pro M1 (2020), 16 GB RAM, no paid GPU. One training run must take under about 10 minutes.
-- Disk is tight (about 14 GB free at start). Large exports (ONNX files) must not pile up across runs.
+- Disk is tight. Large exports (ONNX files) must not pile up across runs: delete them once their numbers are logged to W&B, keep only the last run's.
+- The repo is a public portfolio on GitHub. No secrets or personal data in files or commits.
+- When the project is done, clean up the Mac: delete `.venv/`, `outputs/`, `multirun/`, `wandb/`, ONNX files and this project's Hugging Face caches. List them with sizes first.
 
 ## Finishing a step
 
